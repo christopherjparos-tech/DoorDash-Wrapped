@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>DoorDash Wrapped 🎁</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #111;
+      color: #fff;
+      padding: 40px;
+      max-width: 1000px;
+      margin: auto;
+    }
+    h1 { font-size: 48px; margin-bottom: 10px; }
+    h2 { margin-top: 50px; }
+    .stat {
+      font-size: 24px;
+      margin: 10px 0;
+    }
+    canvas { margin-top: 30px; }
+    .pie-container {
+  width: 400px;   /* 👈 controls pie size */
+  margin: 0 auto; /* centers it */
+}
+.top-right-photo {
+  width: 90px;          /* controls logo size */
+  height: auto;
+  object-fit: contain;
+  border-radius: 12px;
+  border: 2px solid white;
+  background: white;
+  padding: 6px;
+}
+
+.top-right-wrapper {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  z-index: 1000;
+}
+
+.sponsored-text {
+  font-size: 12px;
+  font-style: italic;
+  opacity: 0.7;
+  letter-spacing: 0.3px;
+  width: 120px;        
+  text-align: left;
+}
+/* Neon background container */
+.neon-bg {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  z-index: -1;
+}
+
+/* Base neon shape */
+.neon-shape {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.45;
+  animation: floatDown linear infinite;
+}
+
+/* Individual colors & sizes */
+.neon-shape.pink {
+  width: 300px;
+  height: 300px;
+  background: #ff3cac;
+  top: 10%;
+  left: 5%;
+}
+
+.neon-shape.blue {
+  width: 400px;
+  height: 400px;
+  background: #2bd2ff;
+  top: 40%;
+  left: 70%;
+}
+
+.neon-shape.purple {
+  width: 350px;
+  height: 350px;
+  background: #8f00ff;
+  top: 75%;
+  left: 20%;
+}
+
+@keyframes floatDown {
+  0% {
+    transform: translate(0, -20vh);
+  }
+  50% {
+    transform: translate(40px, 50vh);
+  }
+  100% {
+    transform: translate(-40px, 120vh);
+  }
+}
+
+@keyframes pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.18); }
+  100% { transform: scale(1.1); }
+}
+
+.alot.emphasis {
+  animation: pop 0.5s ease;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+.slides {
+  position: relative;
+  height: 100vh;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  padding: 60px;
+  text-align: center;
+
+  opacity: 0;
+  transform: translateX(50px);
+  transition: all 0.6s ease;
+  pointer-events: none;
+}
+
+/* Active slide */
+.slide.active {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+/* Canvas sizing */
+canvas {
+  max-width: 700px;
+}
+
+.progress {
+  position: fixed;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+}
+
+.progress span {
+  display: block;
+  width: 8px;
+  height: 8px;
+  margin: 12px 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+  transition: all 0.3s ease;
+}
+
+/* Active dot */
+.progress span.active {
+  background: #1db954; /* Spotify green */
+  box-shadow: 0 0 12px #1db954;
+  transform: scale(1.4);
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+.nav-arrows {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column; 
+  align-items: center;
+  gap: 10px;
+  z-index: 20;
+}
+
+.nav-arrows button {
+  font-size: 24px;
+  padding: 12px 20px;
+  border-radius: 50px;
+  border: none;
+  cursor: pointer;
+
+  background: rgba(255,255,255,0.15);
+  color: white;
+
+  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+}
+
+.nav-arrows button:hover {
+  background: rgba(255,255,255,0.3);
+  transform: scale(1.1);
+}
+
+.slide:first-child h1 {
+  font-size: 64px;
+  letter-spacing: -1px;
+}
+
+.slide:first-child p {
+  font-size: 18px;
+}
+
+.start-hint {
+  margin-top: 40px;
+  opacity: 0.6;
+  animation: hintPulse 2s ease-in-out infinite;
+}
+
+@keyframes hintPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+/* Starburst wrapper */
+.starburst-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+/* SVG starburst */
+.starburst {
+  position: absolute;
+  inset: -120px;
+  z-index: -1;
+  width: 420px;
+  height: 420px;
+  filter: drop-shadow(0 0 30px #b6ff00);
+}
+
+/* Subtle animation */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+.title-slide .starburst {
+  position: absolute;
+  inset: -120px;
+  z-index: -1;
+  width: 820px;
+  height: 420px;
+  filter: drop-shadow(0 0 30px #b6ff00);
+  animation: pulse 6s ease-in-out infinite;
+}
+
+.press-hint {
+  font-size: 12px;
+  opacity: 0.7;
+  letter-spacing: 0.4px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  animation: hintPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes hintPulse {
+  0% { opacity: 0.4; }
+  50% { opacity: 0.9; }
+  100% { opacity: 0.4; }
+}
+
+.arrow-row {
+  display: flex;
+  gap: 30px;
+}
+
+.bio-slide h2 {
+  font-size: 42px;
+  margin-bottom: 20px;
+}
+
+.bio-name {
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.bio-line {
+  font-size: 20px;
+  opacity: 0.8;
+  margin: 6px 0;
+}
+
+.bio-slide {
+  align-items: center; /* keeps the slide centered vertically */
+}
+
+.bio-list li {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.bio-layout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 50px;
+  margin-top: 40px;
+
+  flex-direction: row-reverse; /* 👈 flips left/right */
+}
+
+.bio-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.bio-portrait {
+  width: 220px;
+
+  /* Curved / organic shape */
+  border-radius: 28% 28% 36% 36%;
+
+  /* Glow */
+  box-shadow:
+    0 0 40px rgba(182, 255, 0, 0.25),
+    0 20px 60px rgba(0, 0, 0, 0.6);
+
+  object-fit: cover;
+}
+
+.big-years-slide .headline {
+  font-size: 48px;
+  margin-bottom: 20px;
+
+  opacity: 0;
+  transform: translateY(40px);
+  transition: all 0.8s ease;
+}
+
+.big-years-slide .subline {
+  font-size: 26px;
+  opacity: 0;
+  transform: translateY(40px);
+  transition: all 0.8s ease 0.4s; /* delayed */
+}
+
+.big-years-slide.active .headline,
+.big-years-slide.active .subline {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* "A lot." animation */
+.alot {
+  display: inline-block;
+  margin-left: 6px;
+  font-weight: normal;
+  color: white;
+  transition: all 0.6s ease;
+}
+
+/* When triggered */
+.alot.emphasis {
+  color: #ff3b3b; /* 🔴 red */
+  font-weight: 800;
+  transform: scale(1.1);
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.delayed-line {
+  opacity: 0;
+}
+
+.delayed-line.show {
+  animation: slideInLeft 1s ease-out forwards;
+}
+
+.alot {
+  opacity: 0;
+  font-weight: normal;
+  color: white;
+  transition: opacity 0.3s ease;
+}
+
+.alot.emphasis {
+  opacity: 1;
+  font-weight: 800;
+  color: #ff3b3b; /* bold red */
+}
+
+.alot.emphasis {
+  opacity: 1;
+  font-weight: 800;
+  color: #ff3b3b;
+  transform: scale(1.08);
+}
+
+/* Star field container */
+.star-field {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Individual star */
+.star {
+  position: absolute;
+  width: 2px;
+  height: 120px;
+  background: linear-gradient(
+    to bottom,
+    rgba(255,255,255,0),
+    rgba(255,255,255,0.9),
+    rgba(255,255,255,0)
+  );
+  filter: drop-shadow(0 0 6px rgba(255,255,255,0.8));
+  opacity: 0.8;
+  animation: fall linear infinite;
+}
+
+/* Falling animation */
+@keyframes fall {
+  from {
+    transform: translateY(-150px) translateX(0);
+  }
+  to {
+    transform: translateY(120vh) translateX(-200px);
+  }
+}
+
+.star {
+  filter: drop-shadow(0 0 8px #ffd966);
+  background: linear-gradient(
+    to bottom,
+    rgba(255,217,102,0),
+    rgba(255,217,102,1),
+    rgba(255,217,102,0)
+  );
+}
+
+/* Glance slide */
+.glance-slide {
+  justify-content: center;
+}
+
+/* Card container */
+.wrapped-card {
+  display: flex;
+  width: 420px;
+  height: 540px;
+  border-radius: 28px;
+  overflow: hidden;
+  background: #b6ff00;
+  color: #000;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+}
+
+/* Vertical year strip */
+.year-strip {
+ writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 48px;      /* slightly smaller text */
+  font-weight: 900;
+  letter-spacing: -1px;
+  padding: 16px 8px;    /* 👈 tighter bar width */
+  background: #000;
+  color: #b6ff00;
+}
+
+/* Card body */
+.card-body {
+  flex: 1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Image block */
+.card-image img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 18px;
+  margin-bottom: 16px;
+}
+
+/* Stats list */
+.card-stats h3 {
+  font-size: 14px;
+  text-transform: uppercase;
+  opacity: 0.7;
+  margin-bottom: 6px;
+}
+
+.card-stats ol {
+  padding-left: 18px;
+  margin: 0 0 16px 0;
+  font-size: 14px;
+}
+
+.card-stats li {
+  margin-bottom: 4px;
+}
+
+/* Big metric */
+.big-metric {
+  margin-top: auto;
+}
+
+.metric-label {
+  display: block;
+  font-size: 12px;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.metric-value {
+  font-size: 42px;
+  font-weight: 900;
+  letter-spacing: -1px;
+}
+
+/* Footer */
+.card-footer {
+  margin-top: 10px;
+  font-size: 10px;
+  opacity: 0.7;
+  display: flex;
+  align-items: center;
+  justify-content: space-between; 
+}
+
+.footer-logo {
+  height: 50px;          /* 👈 BIG jump (try 48px if you want bolder) */
+  max-height: 80px;
+  opacity: 1;
+}
+
+.wrapped-card {
+  background: linear-gradient(135deg, #b6ff00, #e7ff7a);
+}
+
+.glance-slide .wrapped-card {
+  transform: translateY(40px) scale(0.95);
+  opacity: 0;
+  transition: all 0.8s ease;
+}
+
+.glance-slide.active .wrapped-card {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+.card-lists {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.list-column {
+  flex: 1;
+}
+
+.list-column h3 {
+  font-size: 12px;
+  text-transform: uppercase;
+  opacity: 0.7;
+  margin-bottom: 6px;
+}
+
+.list-column ol {
+  padding-left: 16px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.list-column li {
+  margin-bottom: 4px;
+}
+
+.glance-slide .card-body {
+  text-align: left;
+}
+
+/* Ensure list columns align left */
+.glance-slide .list-column {
+  text-align: left;
+}
+
+/* Optional: tighter, cleaner list look */
+.glance-slide ol {
+  padding-left: 18px;
+}
+
+.footer-logo-wrap {
+  display: flex;
+  align-items: center;
+}
+
+  </style>
+</head>
+<body>
+
+<div class="star-field"></div>
+
+<div class="slides">
+
+  <section class="slide active title-slide">
+  <div class="starburst-wrapper">
+    
+    <!-- STARBURST -->
+    <svg class="starburst" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
+      <polygon
+  fill="#B6FF00"
+  points="
+    50,0
+    56,10
+    66,2
+    68,14
+    80,8
+    76,22
+    92,22
+    82,32
+    98,38
+    84,44
+    100,50
+    84,56
+    98,62
+    82,68
+    92,78
+    76,78
+    80,92
+    68,86
+    66,98
+    56,90
+    50,100
+    44,90
+    34,98
+    32,86
+    20,92
+    24,78
+    8,78
+    18,68
+    2,62
+    16,56
+    0,50
+    16,44
+    2,38
+    18,32
+    8,22
+    24,22
+    20,8
+    32,14
+    34,2
+    44,10
+  "
+/>
+
+    </svg>
+  <h1>DoorDash Wrapped 🎁</h1>
+  <p style="opacity:0.7; margin-top:12px;">
+    Aaron Raymond's Last Few Years in Food 😊
+  </p>
+    </section>
+
+  <section class="slide bio-slide">
+  <h2>Meet the Eater 🍽️</h2>
+
+  <div class="bio-layout">
+    <!-- LEFT: Portrait -->
+    <img
+      src="aaron_smile.PNG"
+      alt="Meet the Eater"
+      class="bio-portrait"
+    />
+
+    <!-- RIGHT: Bio text -->
+    <div class="bio-text">
+      <div class="bio-name">Aaron Raymond</div>
+
+      <ul class="bio-list">
+        <li>Registered Dietitian (RD)</li>
+        <li>Grew up in New Jersey</li>
+        <li>Moved to Virginia in 2024 </li>
+        <li>Toe's Walker</li>
+        <li>Book Reader</li>
+        <li>Loyal to the Eagles</li>
+        <li>Powered by Cravings</li>
+        <li>IPA Enthusiast</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+  <section class="slide big-years-slide">
+  <h2 class="headline">These last couple of years, hunger didn’t stand a chance...</h2>
+
+  <p class="delayed-line">
+  You ordered. We delivered.
+  </p>
+
+  <p class="alot">A LOT.</p>
+  </section>
+
+
+  <section class="slide">
+    <h2>📊 Top Items</h2>
+    <canvas id="itemsChart"></canvas>
+  </section>
+
+  <section class="slide">
+    <h2>🌮 Cuisine Breakdown</h2>
+    <canvas id="categoryChart"></canvas>
+  </section>
+
+    <section class="slide mealtime-slide">
+  <h2 class="headline">When hunger hit hardest</h2>
+
+  <p class="delayed-line">
+    Your prime ordering time was....
+  </p>
+
+  <p class="alot">AFTERNOON 🏅</p>
+
+  <p class="delayed-line">
+    ....Midnight Snack Champion
+  </p>
+</section>
+  
+
+  <section class="slide">
+    <h2>⏰ Meal Times</h2>
+    <div class="pie-container">
+      <canvas id="mealChart"></canvas>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2>📅 Orders Over Time</h2>
+
+    <div style="margin-bottom: 20px;">
+    <label for="monthFilter" style="margin-right: 10px;">
+      Highlight Month:
+    </label>
+    <select id="monthFilter">
+      <option value="">All Months</option>
+    </select>
+  </div>
+
+    <canvas id="monthChart"></canvas>
+  </section>
+
+</div>
+
+<section class="slide glance-slide">
+  <div class="wrapped-card">
+    
+    <!-- Vertical year strip -->
+    <div class="year-strip">2018-2025</div>
+
+    <!-- Main card body -->
+    <div class="card-body">
+      
+      <!-- Image / graphic -->
+      <div class="card-image">
+        <img src="artisans.png" alt="Profile" />
+      </div>
+
+      <div class="card-lists">
+  <div class="list-column">
+    <h3>Top Restaurants</h3>
+    <ol id="top-restaurants"></ol>
+  </div>
+
+  <div class="list-column">
+    <h3>Top Items</h3>
+    <ol id="top-items"></ol>
+  </div>
+</div>
+
+<!-- Big metric -->
+<div class="big-metric">
+  <span class="metric-label">Total Spent (All Time)</span>
+  <span class="metric-value" id="totalSpent">—</span>
+</div>
+
+      <!-- Footer -->
+      <div class="card-footer">
+  <span>DOORDASH.COM/WRAPPED</span>
+  <div class="footer-logo-wrap">
+    <img
+      src="DoorDash-logo-black.png"
+      alt="DoorDash"
+      class="footer-logo"
+    />
+  </div>
+</div>
+
+    </div>
+  </div>
+</section>
+
+<div class="progress">
+  <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+</div>
+
+
+<div class="nav-arrows">
+  <div class="press-hint">Press ➡ to begin</div>
+
+  <div class="arrow-row">
+    <button id="prevBtn">⬅</button>
+    <button id="nextBtn">➡</button>
+  </div>
+</div>
+
+<script>
+let monthChartInstance;
+function loadCSV(file, callback) {
+  Papa.parse(file, {
+    download: true,
+    header: true,
+    complete: results => callback(results.data)
+  });
+}
+
+// Summary
+loadCSV("top_places.csv", d => {
+  document.getElementById("top-restaurants").innerHTML =
+    d.slice(0, 5)
+      .map(r => `<li>${r.STORE_NAME}</li>`)
+      .join("");
+});
+
+// Top 5 Items
+loadCSV("top_items.csv", d => {
+  document.getElementById("top-items").innerHTML =
+    d.slice(0, 5)
+      .map(r => `<li>${r.ITEM_CLEANED}</li>`)
+      .join("");
+});
+
+// Total Spend
+loadCSV("unwrapped_summary.csv", data => {
+  const s = data[0];
+
+  const raw = s.est_total_spent; 
+
+  const total = Number(
+    String(raw).replace(/[$,]/g, "")
+  );
+
+  document.getElementById("totalSpent").textContent =
+    isNaN(total)
+      ? "—"
+      : `$${total.toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        })}`;
+});
+
+
+// Charts
+function barChart(canvasId, labels, values, label) {
+  new Chart(document.getElementById(canvasId), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label,
+        data: values,
+        backgroundColor: "rgba(255,255,255,0.6)"
+      }]
+    },
+    options: {
+      plugins: {
+        annotation: canvasId === "monthChart"
+          ? { annotations: moveAnnotation }
+          : {}
+      },
+      scales: {
+        x: { ticks: { color: "white" } },
+        y: { ticks: { color: "white" } }
+      }
+    }
+  });
+}
+
+function pieChart(canvasId, labels, values) {
+  new Chart(document.getElementById(canvasId), {
+    type: "doughnut",
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: [
+          "#ff6384",
+          "#36a2eb",
+          "#ffcd56",
+          "#4bc0c0",
+          "#9966ff"
+        ]
+      }]
+    },
+    options: {
+  responsive: true,
+  maintainAspectRatio: true,
+  aspectRatio: 1.3,
+  plugins: {
+    legend: {
+      position: "bottom",
+      labels: { color: "white" }
+    },
+    tooltip: {
+  callbacks: {
+    label: function (context) {
+      const label = context.label || "";
+      // Convert values safely to numbers
+      const value = Number(context.parsed) || 0;
+      const total = context.dataset.data
+        .map(v => Number(v) || 0)
+        .reduce((a, b) => a + b, 0);
+
+      const percent = total ? ((value / total) * 100).toFixed(1) : 0;
+
+      return `${label}: ${value} (${percent}%)`;
+    }
+  }
+}
+  }
+}
+  });
+}
+
+loadCSV("top_items.csv", d =>
+  barChart("itemsChart", d.map(r => r.ITEM_CLEANED), d.map(r => +r.count), "Orders")
+);
+
+loadCSV("category_counts.csv", d =>
+  barChart("categoryChart", d.map(r => r.CATEGORY_CLEANED), d.map(r => +r.count), "Orders")
+);
+
+loadCSV("meal_type_counts.csv", d =>
+  pieChart(
+    "mealChart",
+    d.map(r => r["Meal Type"]),
+    d.map(r => +r.count)
+  )
+);
+
+const moveAnnotation = {
+  moveLine: {
+    type: "line",
+    scaleID: "x",
+    value: "2024-02",
+    borderColor: "#FFD966",
+    borderWidth: 3,
+    borderDash: [8, 6],
+    borderRadius: 6,
+    shadowColor: "#FFD966",
+    shadowBlur: 12,
+    z: 10,
+
+    label: {
+      enabled: true,
+      content: "New Jersey ➡️ Virginia",
+      position: "top",     // 👈 anchor to top of chart
+      yAdjust: -190,        // 👈 move it higher above the line
+      backgroundColor: "rgba(0,0,0,0.75)",
+      color: "#FFD966",
+      font: {
+        size: 12,
+        weight: "bold"
+      },
+      padding: 6
+    }
+  }
+};
+
+const MONTH_ORDER = [
+  "January", "February", "March", "April",
+  "May", "June", "July", "August",
+  "September", "October", "November", "December"
+];
+
+loadCSV("orders_by_month.csv", d => {
+
+  // X-axis labels (YYYY-MM)
+  const monthKeys = d.map(r => r.month);
+
+  // Month names (January, February, etc)
+  const monthNames = d.map(r => r.month_name);
+
+  // Bar values
+  const values = d.map(r => +r.count);
+
+  // Populate dropdown (unique months only)
+  const select = document.getElementById("monthFilter");
+  select.innerHTML = `<option value="">All Months</option>`;
+
+  const uniqueMonths = [...new Set(monthNames)]
+  .filter(m => m && m.trim() !== "")
+  .sort((a, b) =>
+    MONTH_ORDER.indexOf(a) - MONTH_ORDER.indexOf(b)
+  );
+
+// Populate dropdown in calendar order
+uniqueMonths.forEach(month => {
+  const option = document.createElement("option");
+  option.value = month;
+  option.textContent = month;
+  select.appendChild(option);
+});
+  // Create chart
+  monthChartInstance = new Chart(
+    document.getElementById("monthChart"),
+    {
+      type: "bar",
+      data: {
+        labels: monthKeys, // ✅ KEEP YYYY-MM ON AXIS
+        datasets: [{
+          label: "Orders",
+          data: values,
+          backgroundColor: monthKeys.map(() => "rgba(255,255,255,0.6)")
+        }]
+      },
+      options: {
+        plugins: {
+          datalabels: {
+            display: ctx =>
+              select.value && monthNames[ctx.dataIndex] === select.value,
+      anchor: "end",
+      align: "top",
+      color: "#fff",
+      font: { weight: "bold" }
+    },
+    annotation: {
+      annotations: moveAnnotation
+    }
+  },
+  scales: {
+    x: { ticks: { color: "white" } },
+    y: { ticks: { color: "white" } }
+  }
+}
+    }
+  );
+
+  // Highlight logic
+  select.addEventListener("change", () => {
+    const selected = select.value;
+
+    monthChartInstance.data.datasets[0].backgroundColor =
+      monthNames.map(m =>
+        !selected
+          ? "rgba(255,255,255,0.6)"
+          : m === selected
+          ? "#ff3b3b"
+          : "rgba(255,255,255,0.25)"
+      );
+
+    monthChartInstance.update("active");
+  });
+});
+
+Chart.register(
+  ChartDataLabels,
+  window['chartjs-plugin-annotation']
+);
+
+
+const shapes = document.querySelectorAll(".neon-shape");
+
+shapes.forEach(shape => {
+  const duration = 20 + Math.random() * 30; // 20–50s
+  const delay = Math.random() * -duration;
+
+  shape.style.animationDuration = `${duration}s`;
+  shape.style.animationDelay = `${delay}s`;
+});
+
+const slides = document.querySelectorAll(".slide");
+const dots = document.querySelectorAll(".progress span");
+
+let currentSlide = 0;
+
+function showSlide(index) {
+  slides.forEach(slide => slide.classList.remove("active"));
+  dots.forEach(dot => dot.classList.remove("active"));
+
+  slides[index].classList.add("active");
+  dots[index]?.classList.add("active");
+
+  /* Reset delayed line */
+  const delayedLine = slides[index].querySelector(".delayed-line");
+  if (delayedLine) {
+    delayedLine.classList.remove("show");
+
+    setTimeout(() => {
+      delayedLine.classList.add("show");
+    }, 3000); // ⏱ 5 second delay
+  }
+
+  /* Handle "A lot." emphasis */
+const alot = slides[index].querySelector(".alot");
+if (alot) {
+  alot.classList.remove("emphasis");
+
+  setTimeout(() => {
+    alot.classList.add("emphasis");
+  }, 6000); // appears exactly when it becomes bold
+}
+}
+
+
+
+const starField = document.querySelector(".star-field");
+const STAR_COUNT = 60;
+
+for (let i = 0; i < STAR_COUNT; i++) {
+  const star = document.createElement("div");
+  star.classList.add("star");
+
+  // Randomize position & animation
+  const left = Math.random() * 100;
+  const duration = 3 + Math.random() * 6;
+  const delay = Math.random() * -10;
+  const height = 60 + Math.random() * 140;
+
+  star.style.left = `${left}vw`;
+  star.style.height = `${height}px`;
+  star.style.animationDuration = `${duration}s`;
+  star.style.animationDelay = `${delay}s`;
+
+  starField.appendChild(star);
+}
+
+document.getElementById("nextBtn").addEventListener("click", () => {
+  if (currentSlide < slides.length - 1) {
+    currentSlide++;
+    showSlide(currentSlide);
+  }
+});
+
+document.getElementById("prevBtn").addEventListener("click", () => {
+  if (currentSlide > 0) {
+    currentSlide--;
+    showSlide(currentSlide);
+  }
+});
+
+// Init
+showSlide(0);
+
+
+
+</script>
+
+</body>
+<div class="top-right-wrapper">
+  <span class="sponsored-text">sponsored by</span>
+  <img src="DoorDash-logo.png" alt="Profile" class="top-right-photo">
+</div>
+</html>
